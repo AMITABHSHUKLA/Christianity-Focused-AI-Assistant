@@ -1,0 +1,8 @@
+streamlit
+openai
+faiss-cpu
+numpy
+requests
+rank_bm25
+duckduckgo-search
+python-dotenv
