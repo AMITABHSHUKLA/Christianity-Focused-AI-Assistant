@@ -11,29 +11,39 @@ The following diagram illustrates the complete data flow, decision routing, and 
 
 ```mermaid
 graph TD
-    Start[("User Query<br>(Theological Q&A or Image Request)")]
-    Init["Initialization & Setup<br>(Load RAG, Session Memory, OpenAI Client)"]
-    ModCheck{"Moderation Check<br>(OpenAI Moderation API)"}
-    RefuseMod[("Refusal Message<br>(Policy Violation)")]
-    Routing{"Intent Routing<br>(Text Q&A or Image Request?)"}
+    %% Define Custom Colors for Nodes
+    classDef uiNode fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#fff;
+    classDef logicNode fill:#2ecc71,stroke:#27ae60,stroke-width:2px,color:#fff;
+    classDef apiNode fill:#9b59b6,stroke:#8e44ad,stroke-width:2px,color:#fff;
+    classDef errorNode fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#fff;
+    classDef decisionNode fill:#f1c40f,stroke:#f39c12,stroke-width:2px,color:#000;
 
-    Refiner{"Prompt Refiner<br>(GPT-4o-mini / Reverence Check)"}
-    RefuseImg[("Refusal Message<br>(Irreverent request)")]
-    OptPrompt[("Optimized Image Prompt<br>(High-Quality Description)")]
-    DALLE["DALL-E Image Generator<br>(OpenAI Images API)"]
-    ImgResp[("Image Response<br>(URL or Static Image)")]
+    %% Define Nodes and assign classes
+    Start[("User Query<br>(Theological Q&A or Image Request)")]:::uiNode
+    Init["Initialization & Setup<br>(Load RAG, Session Memory, OpenAI Client)"]:::logicNode
+    ModCheck{"Moderation Check<br>(OpenAI Moderation API)"}:::decisionNode
+    RefuseMod[("Refusal Message<br>(Policy Violation)")]:::errorNode
+    Routing{"Intent Routing<br>(Text Q&A or Image Request?)"}:::decisionNode
 
-    HybridSearch["Hybrid Search<br>(FAISS Semantic + BM25 Keyword)"]
-    RAGDB[("RAG Context Chunks<br>(Book of John JSON)")]
-    Circuit{"Hallucination Circuit Breaker<br>(LLM Judge: Context sufficient?)"}
-    ExtFact{"External Fact-Check Fallback<br>(DuckDuckGo Search)"}
-    DDGAPI[("DuckDuckGo Search API")]
-    Inject["System Prompt, Context, & History Injection"]
-    GPT4T["Theology Generator<br>(GPT-4o)"]
-    OAIAPI[("OpenAI Chat Completions API")]
-    TextResp[("Text Response<br>(Neutral, Grounded Theology)")]
-    SessionMsg["Update Session Messages"]
+    Refiner{"Prompt Refiner<br>(GPT-4o-mini / Reverence Check)"}:::decisionNode
+    RefuseImg[("Refusal Message<br>(Irreverent request)")]:::errorNode
+    OptPrompt[("Optimized Image Prompt<br>(High-Quality Description)")]:::logicNode
+    DALLE["DALL-E Image Generator<br>(OpenAI Images API)"]:::apiNode
+    ImgResp[("Image Response<br>(URL or Static Image)")]:::uiNode
 
+    HybridSearch["Hybrid Search<br>(FAISS Semantic + BM25 Keyword)"]:::logicNode
+    RAGDB[("RAG Context Chunks<br>(Book of John JSON)")]:::logicNode
+    Circuit{"Hallucination Circuit Breaker<br>(LLM Judge: Context sufficient?)"}:::decisionNode
+    ExtFact{"External Fact-Check Fallback<br>(DuckDuckGo Search)"}:::logicNode
+    DDGAPI[("DuckDuckGo Search API")]:::apiNode
+    Inject["System Prompt, Context, & History Injection"]:::logicNode
+    GPT4T["Theology Generator<br>(GPT-4o)"]:::apiNode
+    OAIAPI[("OpenAI Chat Completions API")]:::apiNode
+    TextResp[("Text Response<br>(Neutral, Grounded Theology)")]:::uiNode
+    SessionMsg["Update Session Messages"]:::logicNode
+    End(("End of turn")):::uiNode
+
+    %% Define Connections
     Start --> Init
     Init --> ModCheck
     ModCheck -- Flagged --> RefuseMod
@@ -61,8 +71,9 @@ graph TD
 
     TextResp --> SessionMsg
     ImgResp --> SessionMsg
-    SessionMsg --> End(("End of turn"))
+    SessionMsg --> End
 
+    %% Subgraphs with Transparent Backgrounds and Colored Borders
     subgraph UIFront[Streamlit UI]
         Start
         TextResp
@@ -70,6 +81,7 @@ graph TD
         RefuseMod
         RefuseImg
     end
+    style UIFront fill:transparent,stroke:#3498db,stroke-width:2px,stroke-dasharray: 5 5
 
     subgraph PipelineLogic[Application Logic & Pipeline]
         Init
@@ -82,14 +94,15 @@ graph TD
         Inject
         SessionMsg
     end
+    style PipelineLogic fill:transparent,stroke:#2ecc71,stroke-width:2px,stroke-dasharray: 5 5
 
     subgraph ExternalAPIs[External API Services]
         OAIAPI
         DALLE
         DDGAPI
     end
+    style ExternalAPIs fill:transparent,stroke:#9b59b6,stroke-width:2px,stroke-dasharray: 5 5
 ```
-
 ## Step-by-Step Architecture Flow
 
 ### 1. Data Ingestion and Indexing
